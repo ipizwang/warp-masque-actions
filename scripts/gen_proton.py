@@ -29,8 +29,8 @@ def ed25519_to_wg(raw_sk: bytes) -> str:
 
 async def main():
     outdir = sys.argv[1] if len(sys.argv) > 1 else "dist"
-    s = Session(appversion="Other",
-                user_agent="ProtonMail/1.0")
+    s = Session(appversion="macos-drive@1.0.0-alpha.1+rclone",
+                user_agent="ProtonMail/3.0 (Macintosh; Intel Mac OS X)")
 
     if not await s.async_authenticate(os.environ["PROTON_USER"],
                                       os.environ["PROTON_PASS"]):
