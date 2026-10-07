@@ -36,13 +36,12 @@ jobs:
 
       - name: 登录并生成凭据
         env:
-          PROTON_USER: ${{ secrets.PROTON_USER }}
-          PROTON_PASS: ${{ secrets.PROTON_PASS }}
+          PROTON_SESSION_TOKEN: ${{ secrets.PROTON_SESSION_TOKEN }}
         run: |
           set -euo pipefail
-          if [ -z "${PROTON_USER:-}" ] || [ -z "${PROTON_PASS:-}" ]; then
+          if [ -z "${PROTON_SESSION_TOKEN:-}" ]; then
             echo "缺 secrets。到 Settings > Secrets and variables > Actions"
-            echo "加 PROTON_USER（Proton 邮箱）和 PROTON_PASS（密码）"
+            echo "加 PROTON_SESSION_TOKEN（Proton Token）"
             exit 1
           fi
           python3 scripts/gen_proton.py dist
