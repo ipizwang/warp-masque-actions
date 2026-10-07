@@ -21,9 +21,10 @@ jobs:
           python-version: '3.12'
 
       - name: 启动 Cloudflare WARP 改变出口 IP
-        uses: fscarmen/warp-on-actions@v1.1
+        uses: fscarmen/warp-on-actions@v1.4
         with:
-          mode: 'sys'
+          stack: dual
+          mode: wireguard
 
       - name: 装依赖
         run: |
