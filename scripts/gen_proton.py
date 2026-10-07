@@ -29,13 +29,32 @@ def ed25519_to_wg(raw_sk: bytes) -> str:
 
 async def main():
     outdir = sys.argv[1] if len(sys.argv) > 1 else "dist"
-    s = Session(appversion="macos-drive@1.0.0-alpha.1+rclone",
-                user_agent="ProtonMail/3.0 (Macintosh; Intel Mac OS X)")
+    s = Session(appversion="linux-vpn-gtk@4.18.2",
+                user_agent="ProtonVPN/4.18.2 (Linux; U; Debian; x86_64)")
 
-    if not await s.async_authenticate(os.environ["PROTON_USER"],
-                                      os.environ["PROTON_PASS"]):
-        sys.exit("登录失败：账号密码不对，或触发了风控（等十几分钟再试）")
-    print("登录成功")
+    token_json = os.environ.get("PROTON_SESSION_TOKEN")
+    if not token_json:
+        sys.exit("错误：未在环境变量中检测到 PROTON_SESSION_TOKEN。为防止触发密码风控，程序已拦截。")
+
+    print("检测到 Session Token，正在强行恢复官方私有会话结构...")
+    try:
+        tokens_dict = json.loads(token_json)
+        # 强行将 Secrets 里的凭据反向注入到官方库的私有变量保护槽中
+        setattr(s, "_Session__UID", tokens_dict.get("UID", ""))
+        setattr(s, "_Session__AccessToken", tokens_dict.get("AccessToken", ""))
+        setattr(s, "_Session__RefreshToken", tokens_dict.get("RefreshToken", ""))
+        print("凭据注入成功！正在向 Proton 验证会话可用性...")
+        # 顺便请求一个极其微量的 API，用来验证刚才注入的 Token 是否还活在有效期内
+        await s.async_api_request("/vpn/v2")
+        print("会话验证成功！已完美跳过账户密码认证步骤。")
+    except Exception as e:
+        # 一旦 Token 彻底失效，直接报错中断，【绝对不】去调用密码登录，确保 100% 安全
+        sys.exit(f"\n❌ 会话凭据已失效或过期: {e}\n请重新在本地运行 extract_token.py 提取新 Token 并更新 GitHub Secrets！")
+
+    # if not await s.async_authenticate(os.environ["PROTON_USER"],
+    #                                   os.environ["PROTON_PASS"]):
+    #     sys.exit("登录失败：账号密码不对，或触发了风控（等十几分钟再试）")
+    # print("登录成功")
 
     vpn = (await s.async_api_request("/vpn/v2")).get("VPN", {})
     print(f"套餐 {vpn.get('PlanName')} / Tier {vpn.get('MaxTier')} / 最大连接 {vpn.get('MaxConnect')}")
